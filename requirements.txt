@@ -1,0 +1,6 @@
+django-select2
+igraph
+networkx
+plotly
+pandas
+Django

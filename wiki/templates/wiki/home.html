@@ -1,0 +1,29 @@
+<!DOCTYPE HTML>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <title>Graph</title>
+</head>
+
+<body>
+    <h3>Wikipedia Graph</h3>
+    <form method="post" action="{% url 'home' %}">
+        {% csrf_token %}
+        <input type="text" placeholder="Search" spellcheck="false" name='search'>
+        <button class="button"><a href="{% url 'home' %}"></a></button>
+    </form>
+    {% if message %}
+    <p>{{ message }}</p>
+    {% endif %}
+
+
+    <div style="width: 100%">
+        {{ plot_div|safe }}
+    </div>
+
+</body>
+
+</html>
