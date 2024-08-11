@@ -5,11 +5,11 @@ Have Compiled and processed over 253,882 articles to extract and map links, form
 inter-article connections.
 ## Live Demo
 
-Check out the [demo](https://wikigraph.pythonanywhere.com/) to see Finance Tracker in action!
+Check out the [demo](https://wikigraph.pythonanywhere.com/) to see Wikipedia Graph in action
+
 
 
 ## Examples
-
 
 ##### Graph of Cricket 
 ![reports](/static/image.png)
@@ -19,3 +19,8 @@ Check out the [demo](https://wikigraph.pythonanywhere.com/) to see Finance Track
 
 ##### Graph of Movie 
 ![reports](/static/image%20copy.png)
+
+
+
+### Update
+Changed the database from CSV to SQLite, resulting in improved performance.
