@@ -15,7 +15,7 @@ Check out the [demo](https://wikigraph.pythonanywhere.com/) to see Finance Track
 ![reports](/static/image.png)
 
 ##### Graph of France 
-![reports](/static/image.png)
+![reports](/static/france.png)
 
 ##### Graph of Movie 
 ![reports](/static/image%20copy.png)
