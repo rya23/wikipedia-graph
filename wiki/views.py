@@ -24,7 +24,7 @@ def home(request):
                 request,
                 "wiki/home.html",
                 {"message": "No results found for the search term."},
-            )       
+            )
         g = ig.Graph(directed=True)
 
         unique_nodes = pd.unique(df[["From", "To"]].values.ravel("K"))
@@ -136,7 +136,6 @@ def home(request):
                 margin=dict(b=20, l=5, r=5, t=40),
                 xaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
                 yaxis=dict(showgrid=False, zeroline=False, showticklabels=False),
-                width=2000,
                 height=800,
             ),
         )
