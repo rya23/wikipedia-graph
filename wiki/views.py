@@ -1,46 +1,47 @@
 from django.shortcuts import render
 from django.http import HttpResponse
 import networkx as nx
-import pandas as pd
-import random
-from igraph import Graph
-import igraph as ig
+from igraph import Graph as igGraph
 import plotly.graph_objects as go
-import networkx as nx
 from plotly.offline import plot
-
-# Create your views here.
+from .models import GraphEdge
 
 
 def home(request):
     if request.method == "POST":
-        search = request.POST["search"]
-        search = search.title()
+        search = request.POST["search"].title()
         print(search)
-        df = pd.read_csv("wiki/graph1.csv")
-        print(df.head())
-        if (search not in df["From"].values) and (search not in df["To"].values):
+
+        # Query edges that involve the search node
+        edges = GraphEdge.objects.filter(source=search) | GraphEdge.objects.filter(
+            target=search
+        )
+
+        if not edges.exists():
             return render(
                 request,
                 "wiki/home.html",
                 {"message": "No results found for the search term."},
             )
-        g = ig.Graph(directed=True)
 
-        unique_nodes = pd.unique(df[["From", "To"]].values.ravel("K"))
+        # Create the graph
+        g = igGraph(directed=True)
+
+        # Add vertices and edges
+        unique_nodes = set(edges.values_list("source", flat=True)) | set(
+            edges.values_list("target", flat=True)
+        )
         g.add_vertices(list(unique_nodes))
-        g.vs["name"] = unique_nodes
+        g.vs["name"] = list(unique_nodes)
 
         name_to_index = {name: idx for idx, name in enumerate(g.vs["name"])}
 
-        edges = [
-            (name_to_index[src], name_to_index[dst])
-            for src, dst in zip(df["From"], df["To"])
+        edge_tuples = [
+            (name_to_index[edge.source], name_to_index[edge.target]) for edge in edges
         ]
-        print(4)
+        g.add_edges(edge_tuples)
 
-        g.add_edges(edges)
-
+        # Compute connected nodes
         connectednodes = g.neighborhood(search, mode="out")
         if len(connectednodes) == 0:
             return render(
@@ -49,29 +50,24 @@ def home(request):
                 {"message": "No results found for the search term."},
             )
 
+        # Limit the number of nodes to 1000
         if len(connectednodes) > 1000:
             connectednodes = connectednodes[:1000]
 
+        # Induced subgraph for connected nodes
         g = g.induced_subgraph(connectednodes)
-
         tempgraph = g.to_networkx()
-
         G = nx.Graph(tempgraph)
 
+        # Compute positions for nodes
         pos = nx.spring_layout(G)
-        edge_x = []
-        print(5)
+        edge_x, edge_y = [], []
 
-        edge_y = []
         for edge in G.edges():
             x0, y0 = pos[edge[0]]
             x1, y1 = pos[edge[1]]
-            edge_x.append(x0)
-            edge_x.append(x1)
-            edge_x.append(None)
-            edge_y.append(y0)
-            edge_y.append(y1)
-            edge_y.append(None)
+            edge_x.extend([x0, x1, None])
+            edge_y.extend([y0, y1, None])
 
         edge_trace = go.Scatter(
             x=edge_x,
@@ -81,8 +77,7 @@ def home(request):
             mode="lines",
         )
 
-        node_x = []
-        node_y = []
+        node_x, node_y = [], []
         for node in G.nodes():
             x, y = pos[node]
             node_x.append(x)
@@ -95,10 +90,6 @@ def home(request):
             hoverinfo="text",
             marker=dict(
                 showscale=False,
-                # colorscale options
-                #'Greys' | 'YlGnBu' | 'Greens' | 'YlOrRd' | 'Bluered' | 'RdBu' |
-                #'Reds' | 'Blues' | 'Picnic' | 'Rainbow' | 'Portland' | 'Jet' |
-                #'Hot' | 'Blackbody' | 'Earth' | 'Electric' | 'Viridis' |
                 colorscale="YlGnBu",
                 reversescale=True,
                 color=[],
@@ -107,19 +98,13 @@ def home(request):
             ),
         )
 
-        node_adjacencies = []
-        node_text = []
-        for node in G.nodes(data=True):
-            node_text.append(
-                '<a href="https://simple.wikipedia.org/wiki/'
-                + node[1]["name"]
-                + '">'
-                + node[1]["name"]
-                + "</a>"
-            )
-
-        for node, adjacencies in enumerate(G.adjacency()):
-            node_adjacencies.append(len(adjacencies[1]))
+        node_adjacencies = [
+            len(adjacencies[1]) for node, adjacencies in enumerate(G.adjacency())
+        ]
+        node_text = [
+            f'<a href="https://simple.wikipedia.org/wiki/{g.vs[node]["name"]}">{g.vs[node]["name"]}</a>'
+            for node in G.nodes()
+        ]
 
         max_degree = max(node_adjacencies)
         node_trace.marker.color = node_adjacencies
@@ -142,5 +127,4 @@ def home(request):
         plot_div = plot(fig, output_type="div", include_plotlyjs=False)
         return render(request, "wiki/home.html", context={"plot_div": plot_div})
 
-    else:
-        return render(request, "wiki/home.html")
+    return render(request, "wiki/home.html")

@@ -2,7 +2,7 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
+.tar.xz
 # C extensions
 *.so
 *.csv
